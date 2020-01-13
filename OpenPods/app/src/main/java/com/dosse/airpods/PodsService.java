@@ -116,6 +116,7 @@ public class PodsService extends Service {
                     super.onBatchScanResults(scanResults);
                 }
 
+                // EDITED FOR URBANPODS
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
                     try {
@@ -123,7 +124,7 @@ public class PodsService extends Service {
                         if (data == null||data.length!=27) return;
                         recentBeacons.add(result);
                         if(ENABLE_LOGGING) Log.d(TAG,""+result.getRssi()+"db");
-                        if(ENABLE_LOGGING) Log.d(TAG, decodeHex(data));
+                        //if(ENABLE_LOGGING) Log.d(TAG, decodeHex(data));
                         ScanResult strongestBeacon=null;
                         for(int i=0;i<recentBeacons.size();i++){
                             if(SystemClock.elapsedRealtimeNanos()-recentBeacons.get(i).getTimestampNanos()>RECENT_BEACONS_MAX_T_NS){
@@ -135,8 +136,12 @@ public class PodsService extends Service {
                         if(strongestBeacon!=null&&strongestBeacon.getDevice().getAddress().equals(result.getDevice().getAddress())) strongestBeacon=result;
                         result=strongestBeacon;
                         if(result.getRssi()<-60) return;
-                        String a=decodeHex(result.getScanRecord().getManufacturerSpecificData(76));
+                        byte[] mdata = result.getScanRecord().getManufacturerSpecificData(76);
+                        String[] hexstr = decodeHex(mdata);
+
+                        /*
                         String str = ""; //left airpod (0-10 batt; 15=disconnected)
+
                         String str2 = ""; //right airpod (0-10 batt; 15=disconnected)
                         if (isFlipped(a)) {
                             str = "" + a.charAt(12);
@@ -146,15 +151,17 @@ public class PodsService extends Service {
                             str2 = "" + a.charAt(12);
                         }
                         String str3 = "" + a.charAt(15); //case (0-10 batt; 15=disconnected)
-                        String str4 = "" + a.charAt(14); //charge status (bit 0=left; bit 1=right; bit 2=case)
-                        leftStatus = Integer.parseInt(str, 16);
-                        rightStatus = Integer.parseInt(str2, 16);
-                        caseStatus = Integer.parseInt(str3, 16);
+
+                        */
+                        String str4 = "000";
+                        leftStatus = Integer.parseInt(hexstr[12], 16);
+                        rightStatus = Integer.parseInt(hexstr[13], 16);
+                        caseStatus = Integer.parseInt(hexstr[14], 16);
                         int chargeStatus = Integer.parseInt(str4, 16);
                         chargeL = (chargeStatus & 0b00000001) != 0;
                         chargeR = (chargeStatus & 0b00000010) != 0;
                         chargeCase = (chargeStatus & 0b00000100) != 0;
-                        if(a.charAt(7)=='E') model = MODEL_AIRPODS_PRO; else model = MODEL_AIRPODS_NORMAL; //detect if these are AirPods pro or regular ones
+                        model = MODEL_AIRPODS_NORMAL; //detect if these are AirPods pro or regular ones
                         lastSeenConnected = System.currentTimeMillis();
                     } catch (Throwable t) {
                         if(ENABLE_LOGGING) Log.d(TAG, "" + t);
@@ -194,14 +201,13 @@ public class PodsService extends Service {
     }
 
     private final char[] hexCharset = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
-    private String decodeHex(byte[] bArr) {
-        char[] ret = new char[bArr.length * 2];
-        for (int i = 0; i < bArr.length; i++) {
-            int b = bArr[i] & 0xFF;
-            ret[i*2] = hexCharset[b >>> 4];
-            ret[i*2+1] = hexCharset[b & 0x0F];
+    private String[] decodeHex(byte[] bArr) {
+        String[] ret = new String[bArr.length];
+        for(int i = 0; i < bArr.length; ++i) {
+            ret[i] = String.format("%02x", bArr[i]);
         }
-        return new String(ret);
+
+        return ret;
     }
 
     private boolean isFlipped(String str) {
@@ -309,12 +315,20 @@ public class PodsService extends Service {
                         notificationSmall.setViewVisibility(R.id.leftPodUpdating, View.INVISIBLE);
                         notificationSmall.setViewVisibility(R.id.rightPodUpdating, View.INVISIBLE);
                         notificationSmall.setViewVisibility(R.id.podCaseUpdating, View.INVISIBLE);
+                        /*
                         notificationBig.setTextViewText(R.id.leftPodText, (leftStatus==10?"100%":leftStatus<10?(((leftStatus)*10+5)+"%"):"") + ((chargeL && leftStatus < 10) ? "+" : ""));
                         notificationBig.setTextViewText(R.id.rightPodText, (rightStatus==10?"100%":rightStatus<10?(((rightStatus)*10+5)+"%"):"") + ((chargeR && rightStatus < 10) ? "+" : ""));
                         notificationBig.setTextViewText(R.id.podCaseText, (caseStatus==10?"100%":caseStatus<10?(((caseStatus)*10+5)+"%"):"") + ((chargeCase && caseStatus < 10) ? "+" : ""));
                         notificationSmall.setTextViewText(R.id.leftPodText, (leftStatus==10?"100%":leftStatus<10?(((leftStatus)*10+5)+"%"):"") + ((chargeL && leftStatus < 10) ? "+" : ""));
                         notificationSmall.setTextViewText(R.id.rightPodText, (rightStatus==10?"100%":rightStatus<10?(((rightStatus)*10+5)+"%"):"") + ((chargeR && rightStatus < 10) ? "+" : ""));
                         notificationSmall.setTextViewText(R.id.podCaseText, (caseStatus==10?"100%":caseStatus<10?(((caseStatus)*10+5)+"%"):"") + ((chargeCase && caseStatus < 10) ? "+" : ""));
+                        */
+                        notificationBig.setTextViewText(R.id.leftPodText, String.valueOf(leftStatus));
+                        notificationBig.setTextViewText(R.id.rightPodText,  String.valueOf(rightStatus));
+                        notificationBig.setTextViewText(R.id.podCaseText,  String.valueOf(caseStatus));
+                        notificationSmall.setTextViewText(R.id.leftPodText, String.valueOf(leftStatus));
+                        notificationSmall.setTextViewText(R.id.rightPodText,  String.valueOf(rightStatus));
+                        notificationSmall.setTextViewText(R.id.podCaseText,  String.valueOf(caseStatus));
                     }else{
                         notificationBig.setViewVisibility(R.id.leftPodText, View.INVISIBLE);
                         notificationBig.setViewVisibility(R.id.rightPodText, View.INVISIBLE);
