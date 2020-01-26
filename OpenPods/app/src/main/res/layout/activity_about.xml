@@ -39,31 +39,42 @@
         android:textColor="#404040"
         />
 
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/aboutedit"
+            android:layout_below="@id/about1"
+            android:id="@+id/aboutedit"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"
+            android:textColor="#404040"
+            android:layout_marginTop="6dp"/>
+
+
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/about1"
-        android:gravity="center"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="12dp"
-        android:id="@+id/buttons">
-        <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/website"
-            android:id="@+id/website"/>
+            android:layout_below="@id/about1"
+            android:gravity="center"
+            android:layout_marginBottom="30dp"
+            android:id="@+id/buttons" android:layout_marginTop="39dp">
         <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/github"
-            android:id="@+id/github"/>
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/website"
+                android:id="@+id/website"/>
         <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/donate"
-            android:id="@+id/donate"
-            android:backgroundTint="#EABF80"
-            />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/github"
+                android:id="@+id/github"/>
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/donate"
+                android:id="@+id/donate"
+                android:backgroundTint="#EABF80"
+        />
     </LinearLayout>
 
     <WebView

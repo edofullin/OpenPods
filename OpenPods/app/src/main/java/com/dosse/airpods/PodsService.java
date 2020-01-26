@@ -257,7 +257,7 @@ public class PodsService extends Service {
             RemoteViews locationDisabledSmall = new RemoteViews(getPackageName(), R.layout.location_disabled_small);
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(PodsService.this, TAG);
             mBuilder.setShowWhen(false);
-            mBuilder.setOngoing(true);
+           // mBuilder.setOngoing(true);
             mBuilder.setSmallIcon(R.mipmap.notification_icon);
             for (; ; ) {
                 if (maybeConnected) {
@@ -272,7 +272,7 @@ public class PodsService extends Service {
                         notificationShowing = false;
                         continue;
                     }
-                    mNotifyManager.cancel(1);
+                 //   mNotifyManager.cancel(1);
                 }
                 if (isLocationEnabled()) {
                     mBuilder.setCustomContentView(notificationSmall);
@@ -311,7 +311,7 @@ public class PodsService extends Service {
                         notificationBig.setTextViewText(R.id.podCaseText, caseStatus == 255 ? "N/C" : (String.valueOf(caseStatus) + " %"));
                         notificationSmall.setTextViewText(R.id.leftPodText, String.valueOf(leftStatus) + (chargeL ? "+" : "") + " %");
                         notificationSmall.setTextViewText(R.id.rightPodText, String.valueOf(rightStatus) + (chargeR ? "+" : "") + " %");
-                        notificationSmall.setTextViewText(R.id.podCaseText, caseStatus == 255 ? "N/C" : (String.valueOf(caseStatus) + " %");
+                        notificationSmall.setTextViewText(R.id.podCaseText, caseStatus == 255 ? "N/C" : (String.valueOf(caseStatus) + " %"));
                     }else{
                         notificationBig.setViewVisibility(R.id.leftPodText, View.INVISIBLE);
                         notificationBig.setViewVisibility(R.id.rightPodText, View.INVISIBLE);
