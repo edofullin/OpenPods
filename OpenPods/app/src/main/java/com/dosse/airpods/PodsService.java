@@ -45,7 +45,7 @@ public class PodsService extends Service {
     private static final boolean ENABLE_LOGGING = BuildConfig.DEBUG; //Log is only displayed if this is a debug build, not release
 
     private static BluetoothLeScanner btScanner;
-    private static int leftStatus = 255, rightStatus = 255, caseStatus = 255;
+    private static int leftStatus = 255, rightStatus = 255, caseStatus = 255, lastCaseStatus = 255;
     private static boolean chargeL = false, chargeR = false, chargeCase = false;
     private static final String MODEL_AIRPODS_NORMAL = "airpods12", MODEL_AIRPODS_PRO = "airpodspro";
     private static String model = MODEL_AIRPODS_NORMAL;
@@ -142,6 +142,11 @@ public class PodsService extends Service {
 
                                 leftStatus = Integer.parseInt(hexstr[13], 16) & 0b01111111;
                                 rightStatus = Integer.parseInt(hexstr[12], 16) & 0b01111111;
+
+                                if(Integer.parseInt(hexstr[14], 16) != 255) {
+                                    lastCaseStatus = caseStatus;
+                                }
+
                                 caseStatus = Integer.parseInt(hexstr[14], 16);
                                 chargeL = (Integer.parseInt(hexstr[13], 16) & 0b10000000) != 0;
                                 chargeR = (Integer.parseInt(hexstr[12], 16) & 0b10000000) != 0;
@@ -216,11 +221,20 @@ public class PodsService extends Service {
     private static NotificationThread n = null;
     private static final String TAG = "AirPods";
     private static long lastSeenConnected = 0;
-    private static final long TIMEOUT_CONNECTED = 30000;
+    private static final long TIMEOUT_CONNECTED = 5000;
     private static boolean maybeConnected = false;
+    private static boolean notificationShowing = false;
 
+    class NotificationSwipedReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            notificationShowing = false;
+        }
+    }
 
     private class NotificationThread extends Thread {
+
         private boolean isLocationEnabled() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 LocationManager service = (LocationManager) getSystemService(getApplicationContext().LOCATION_SERVICE);
@@ -242,7 +256,7 @@ public class PodsService extends Service {
                 NotificationChannel channel = new NotificationChannel(TAG, TAG, NotificationManager.IMPORTANCE_LOW);
                 channel.enableVibration(false);
                 channel.enableLights(false);
-                channel.setShowBadge(true);
+                channel.setShowBadge(false);
                 channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
                 mNotifyManager.createNotificationChannel(channel);
             }
@@ -250,15 +264,15 @@ public class PodsService extends Service {
 
         @SuppressWarnings("Duplicates")
         public void run() {
-            boolean notificationShowing = false;
             RemoteViews notificationBig = new RemoteViews(getPackageName(), R.layout.status_big);
             RemoteViews notificationSmall = new RemoteViews(getPackageName(), R.layout.status_small);
             RemoteViews locationDisabledBig = new RemoteViews(getPackageName(), R.layout.location_disabled_big);
             RemoteViews locationDisabledSmall = new RemoteViews(getPackageName(), R.layout.location_disabled_small);
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(PodsService.this, TAG);
             mBuilder.setShowWhen(false);
-           // mBuilder.setOngoing(true);
+            mBuilder.setOngoing(true);
             mBuilder.setSmallIcon(R.mipmap.notification_icon);
+
             for (; ; ) {
                 if (maybeConnected) {
                     if (!notificationShowing) {
@@ -272,10 +286,11 @@ public class PodsService extends Service {
                         notificationShowing = false;
                         continue;
                     }
-                 //   mNotifyManager.cancel(1);
+
+                    mNotifyManager.cancel(1);
                 }
 
-                if(isLocationEnabled()||Build.VERSION.SDK_INT>=29) { //apparently this restriction was removed in android Q
+                if (isLocationEnabled() || Build.VERSION.SDK_INT >= 29) { //apparently this restriction was removed in android Q
                     mBuilder.setCustomContentView(notificationSmall);
                     mBuilder.setCustomBigContentView(notificationBig);
                 } else {
@@ -293,40 +308,43 @@ public class PodsService extends Service {
                         notificationSmall.setImageViewResource(R.id.rightPodImg, rightStatus != 255 ? R.drawable.right_pod : R.drawable.right_pod_disconnected);
                         notificationSmall.setImageViewResource(R.id.podCaseImg, caseStatus != 255 ? R.drawable.pod_case : R.drawable.pod_case_disconnected);
 
-                    if((System.currentTimeMillis() - lastSeenConnected) < TIMEOUT_CONNECTED) {
-                        notificationBig.setViewVisibility(R.id.leftPodText, View.VISIBLE);
-                        notificationBig.setViewVisibility(R.id.rightPodText, View.VISIBLE);
-                        notificationBig.setViewVisibility(R.id.podCaseText, View.VISIBLE);
-                        notificationBig.setViewVisibility(R.id.leftPodUpdating, View.INVISIBLE);
-                        notificationBig.setViewVisibility(R.id.rightPodUpdating, View.INVISIBLE);
-                        notificationBig.setViewVisibility(R.id.podCaseUpdating, View.INVISIBLE);
-                        notificationSmall.setViewVisibility(R.id.leftPodText, View.VISIBLE);
-                        notificationSmall.setViewVisibility(R.id.rightPodText, View.VISIBLE);
-                        notificationSmall.setViewVisibility(R.id.podCaseText, View.VISIBLE);
-                        notificationSmall.setViewVisibility(R.id.leftPodUpdating, View.INVISIBLE);
-                        notificationSmall.setViewVisibility(R.id.rightPodUpdating, View.INVISIBLE);
-                        notificationSmall.setViewVisibility(R.id.podCaseUpdating, View.INVISIBLE);
+                        if ((System.currentTimeMillis() - lastSeenConnected) < TIMEOUT_CONNECTED) {
+                            notificationSmall.setViewVisibility(R.id.value_old_tv, View.INVISIBLE);
+                            notificationBig.setViewVisibility(R.id.leftPodText, View.VISIBLE);
+                            notificationBig.setViewVisibility(R.id.rightPodText, View.VISIBLE);
+                            notificationBig.setViewVisibility(R.id.podCaseText, View.VISIBLE);
+                            notificationBig.setViewVisibility(R.id.leftPodUpdating, View.INVISIBLE);
+                            notificationBig.setViewVisibility(R.id.rightPodUpdating, View.INVISIBLE);
+                            notificationBig.setViewVisibility(R.id.podCaseUpdating, View.INVISIBLE);
+                            notificationSmall.setViewVisibility(R.id.leftPodText, View.VISIBLE);
+                            notificationSmall.setViewVisibility(R.id.rightPodText, View.VISIBLE);
+                            notificationSmall.setViewVisibility(R.id.podCaseText, View.VISIBLE);
+                            notificationSmall.setViewVisibility(R.id.leftPodUpdating, View.INVISIBLE);
+                            notificationSmall.setViewVisibility(R.id.rightPodUpdating, View.INVISIBLE);
+                            notificationSmall.setViewVisibility(R.id.podCaseUpdating, View.INVISIBLE);
 
-                        notificationBig.setTextViewText(R.id.leftPodText, String.valueOf(leftStatus) + (chargeL ? "+" : "") + " %");
-                        notificationBig.setTextViewText(R.id.rightPodText, String.valueOf(rightStatus) + (chargeL ? "+" : "") + " %");
-                        notificationBig.setTextViewText(R.id.podCaseText, caseStatus == 255 ? "N/C" : (String.valueOf(caseStatus) + " %"));
-                        notificationSmall.setTextViewText(R.id.leftPodText, String.valueOf(leftStatus) + (chargeL ? "+" : "") + " %");
-                        notificationSmall.setTextViewText(R.id.rightPodText, String.valueOf(rightStatus) + (chargeR ? "+" : "") + " %");
-                        notificationSmall.setTextViewText(R.id.podCaseText, caseStatus == 255 ? "N/C" : (String.valueOf(caseStatus) + " %"));
-                    }else{
-                        notificationBig.setViewVisibility(R.id.leftPodText, View.INVISIBLE);
-                        notificationBig.setViewVisibility(R.id.rightPodText, View.INVISIBLE);
-                        notificationBig.setViewVisibility(R.id.podCaseText, View.INVISIBLE);
-                        notificationBig.setViewVisibility(R.id.leftPodUpdating, View.VISIBLE);
-                        notificationBig.setViewVisibility(R.id.rightPodUpdating, View.VISIBLE);
-                        notificationBig.setViewVisibility(R.id.podCaseUpdating, View.VISIBLE);
-                        notificationSmall.setViewVisibility(R.id.leftPodText, View.INVISIBLE);
-                        notificationSmall.setViewVisibility(R.id.rightPodText, View.INVISIBLE);
-                        notificationSmall.setViewVisibility(R.id.podCaseText, View.INVISIBLE);
-                        notificationSmall.setViewVisibility(R.id.leftPodUpdating, View.VISIBLE);
-                        notificationSmall.setViewVisibility(R.id.rightPodUpdating, View.VISIBLE);
-                        notificationSmall.setViewVisibility(R.id.podCaseUpdating, View.VISIBLE);
-                    }
+                            notificationBig.setTextViewText(R.id.leftPodText, String.valueOf(leftStatus) + " %");
+                            notificationBig.setTextViewText(R.id.rightPodText, String.valueOf(rightStatus) + " %");
+                            notificationBig.setTextViewText(R.id.podCaseText, lastCaseStatus == 255 ? "N/C" : (String.valueOf(lastCaseStatus) + " %"));
+                            notificationSmall.setTextViewText(R.id.leftPodText, String.valueOf(leftStatus) + " %");
+                            notificationSmall.setTextViewText(R.id.rightPodText, String.valueOf(rightStatus) + " %");
+                            notificationSmall.setTextViewText(R.id.podCaseText, lastCaseStatus == 255 ? "N/C" : (String.valueOf(lastCaseStatus) + " %"));
+                        } else {
+                            notificationSmall.setViewVisibility(R.id.value_old_tv, View.VISIBLE);
+//                            notificationBig.setViewVisibility(R.id.leftPodText, View.INVISIBLE);
+//                            notificationBig.setViewVisibility(R.id.rightPodText, View.INVISIBLE);
+//                            notificationBig.setViewVisibility(R.id.podCaseText, View.INVISIBLE);
+//                            notificationBig.setViewVisibility(R.id.leftPodUpdating, View.VISIBLE);
+//                            notificationBig.setViewVisibility(R.id.rightPodUpdating, View.VISIBLE);
+//                            notificationBig.setViewVisibility(R.id.podCaseUpdating, View.VISIBLE);
+//                            notificationSmall.setViewVisibility(R.id.leftPodText, View.INVISIBLE);
+//                            notificationSmall.setViewVisibility(R.id.rightPodText, View.INVISIBLE);
+//                            notificationSmall.setViewVisibility(R.id.podCaseText, View.INVISIBLE);
+//                            notificationSmall.setViewVisibility(R.id.leftPodUpdating, View.VISIBLE);
+//                            notificationSmall.setViewVisibility(R.id.rightPodUpdating, View.VISIBLE);
+//                            notificationSmall.setViewVisibility(R.id.podCaseUpdating, View.VISIBLE);
+                        }
+
                         mNotifyManager.notify(1, mBuilder.build());
                     }
                     try {

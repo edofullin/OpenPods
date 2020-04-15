@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name" translatable="false">OpenPods</string>
-    <string name="intro1">This app lets you check the status of your AirPods on any Android device</string>
+    <string name="intro1">This app lets you check the status of your UrbanPods on any Android device</string>
     <string name="intro2">To operate, we need permission to use Bluetooth LE (Location) and permission to run in background</string>
     <string name="introAllow">Allow</string>
     <string name="main1">The app will show a notification when your AirPods are connected</string>
@@ -17,7 +17,7 @@
     <string name="batterySaver_desc">Enable this if Bluetooth uses a lot of battery</string>
     <string name="about">About</string>
 
-    <string name="about1">Original App developed by Federico Dossena</string>
+    <string name="about1">Original App developed by Federico Dossena, Forked by edofullo</string>
     <string name="aboutedit" translatable="false">Urbanpods mod by edofullo</string>
     <string name="website">Website</string>
     <string name="github">Github</string>

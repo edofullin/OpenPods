@@ -119,4 +119,21 @@
     </RelativeLayout>
 
 
+    <RelativeLayout android:layout_width="70dp" android:layout_height="30dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginStart="10dp"
+                    android:layout_toRightOf="@id/podCase">
+
+        <TextView
+                android:text="OLD"
+                android:layout_height="match_parent"
+                android:layout_width="30dp"
+                android:textColor="#000"
+                android:gravity="center"
+                android:visibility="invisible"
+                android:id="@+id/value_old_tv"
+        />
+
+    </RelativeLayout>
+
 </RelativeLayout>
