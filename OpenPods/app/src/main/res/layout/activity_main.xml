@@ -51,6 +51,12 @@
             android:id="@+id/settings"
             android:layout_alignParentEnd="true"
             />
+        <TextView
+                android:text="This app is a fork of adolfintel/OpenPods and it may not work properly"
+                android:layout_marginTop="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:id="@+id/textView"
+                android:layout_below="@+id/settings"/>
 
     </RelativeLayout>
 
