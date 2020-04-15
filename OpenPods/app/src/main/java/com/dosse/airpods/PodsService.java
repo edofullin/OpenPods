@@ -274,7 +274,7 @@ public class PodsService extends Service {
             mBuilder.setSmallIcon(R.mipmap.notification_icon);
 
             for (; ; ) {
-                if (maybeConnected) {
+                if (maybeConnected && lastCaseStatus != 255) {
                     if (!notificationShowing) {
                         if (ENABLE_LOGGING) Log.d(TAG, "Creating notification");
                         notificationShowing = true;
